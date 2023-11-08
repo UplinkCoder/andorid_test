@@ -27,6 +27,7 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
                          const char *url, const char *method,
                          const char *version, const char *upload_data,
                          size_t *upload_data_size, void **con_cls) {
+    fprintf(stderr, "url: %s\n", url);
     if (strcmp(method, "GET") == 0 && strcmp(url, "/daistkato") == 0) {
         const char *response = "Not Found";
         struct MHD_Response *response_data;
