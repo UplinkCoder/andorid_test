@@ -2,7 +2,9 @@ package com.example.myapplication;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -13,6 +15,12 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.core.app.ActivityCompat;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
 
 public class MainActivity extends Activity {
 
@@ -111,6 +119,46 @@ public class MainActivity extends Activity {
 
             // Display location information on the label
             locationTextView.setText("Latitude: " + latitude + "\nLongitude: " + longitude);
+            updateLocation(latitude, longitude);
+        }
+
+        private void updateLocation(double latitude, double longitude) {
+            HttpURLConnection urlConnection = null;
+            InputStream inputStream = null;
+
+            // Retrieve the URL from shared preferences
+            SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+            String url = sharedPreferences.getString("url", "");
+
+            try {
+                // Construct the URL with latitude and longitude as query parameters
+                URL updateUrl = new URL(url + "?lat=" + latitude + "&lon=" + longitude);
+                urlConnection = (HttpURLConnection) updateUrl.openConnection();
+
+                urlConnection.setRequestMethod("GET");
+
+                // Read the response, if needed
+                inputStream = urlConnection.getInputStream();
+                Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
+                String response = scanner.hasNext() ? scanner.next() : "";
+
+                // Handle the response as needed
+
+            } catch (IOException e) {
+                // Handle exceptions
+                e.printStackTrace();
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
 
         @Override
