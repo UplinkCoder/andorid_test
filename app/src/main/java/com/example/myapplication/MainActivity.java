@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -19,6 +20,7 @@ public class MainActivity extends Activity {
     private LocationManager locationManager;
     private LocationListener locationListener;
     private TextView locationTextView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +49,15 @@ public class MainActivity extends Activity {
                 requestSingleLocationUpdate();
             }
         });
+        Button openSettingsButton = findViewById(R.id.openSettingsButton);
+        openSettingsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent settingsIntent = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(settingsIntent);
+            }
+        });
+
     }
 
     private void startLocationUpdates() {
@@ -69,6 +80,25 @@ public class MainActivity extends Activity {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, null);
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, start requesting location updates
+                startLocationUpdates();
+            } else {
+                // Permission denied, handle accordingly (e.g., show a message to the user)
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Stop location updates when the activity is destroyed
+        locationManager.removeUpdates(locationListener);
     }
 
     private class MyLocationListener implements LocationListener {
@@ -94,24 +124,5 @@ public class MainActivity extends Activity {
         @Override
         public void onProviderDisabled(String provider) {
         }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, start requesting location updates
-                startLocationUpdates();
-            } else {
-                // Permission denied, handle accordingly (e.g., show a message to the user)
-            }
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Stop location updates when the activity is destroyed
-        locationManager.removeUpdates(locationListener);
     }
 }
