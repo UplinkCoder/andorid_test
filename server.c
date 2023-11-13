@@ -16,6 +16,34 @@ typedef struct location_t {
 
 static struct location_t lastLocation = {0, 0};  // To store the last location
 
+const char* create_maps_html(double latitude, double longitude)
+{
+    static char buffer[1024];
+
+    int sz = (int) snprintf(buffer, sizeof(buffer),
+        "<html>"
+        "<head>"
+        "<title>Wo ist mein Sklave</title>"
+        "</head>"
+        "<body>"
+        "<script>"
+        "function addMapIframe(latitude, longitude) {"
+        "  var iframe = document.createElement(\"iframe\");"
+        "  var src = \"https://maps.google.com/maps?q=\" + latitude + \",\" + longitude + \"&z=16&output=embed\";"
+        "  iframe.src = src;"
+        "  iframe.height = \"450\";"
+        "  iframe.width = \"600\";"
+        "  iframe.style = \"position: absolute; height: 100%%;width: 100%%; border: none\";"
+        "  document.body.appendChild(iframe);"
+        "}"
+        "addMapIframe(%f, %f);"
+        "</script>"
+        "</body>"
+        "</html>", latitude, longitude);
+
+        return buffer;
+}
+
 const char *create_location_json(double latitude, double longitude) {
     // Create a JSON response string with latitude and longitude
     static char response[128];
@@ -92,7 +120,8 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
                 if (rc == SQLITE_ROW) {
                     latitude = sqlite3_column_double(stmt, 0);
                     longitude = sqlite3_column_double(stmt, 1);
-                    response = create_location_json(latitude, longitude);
+                    // response = create_location_json(latitude, longitude);
+                    response = create_maps_html(latitude, longitude);
                 }
                 sqlite3_finalize(stmt);
             }

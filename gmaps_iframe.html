@@ -1,0 +1,26 @@
+<html>
+<head>
+<title>Wo ist mein Sklave</title>
+</head>
+<body>
+<script>
+function addMapIframe(latitude, longitude) {
+  // Create a new iframe element
+  var iframe = document.createElement("iframe");
+
+  // Construct the iframe source string with the provided latitude and longitude
+  var src = "http://maps.google.com/maps?q=" + latitude + "," + longitude + "&z=16&output=embed";
+  
+  // Set attributes for the iframe
+  iframe.src = src;
+  iframe.height = "450";
+  iframe.width = "600";
+
+  // Append the iframe to the body of the current document
+  document.body.appendChild(iframe);
+}
+
+addMapIframe(48.861500, 9.185760);
+</script>
+</body>
+</html>

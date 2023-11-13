@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Route Display</title>
+</head>
+<body>
+   <div id="map"></div>
+
+   <!-- Polyfills for older browsers -->
+   <script src="https://unpkg.com/es6-promise@4.2.8/dist/es6-promise.auto.min.js"></script>
+   <script src="https://unpkg.com/whatwg-fetch@3.6.2/dist/fetch.umd.js"></script>
+
+   <script src="show_route.js"></script>
+   <script async defer src="https://maps.googleapis.com/maps/api/js?key=your-api-key&callback=initMap"></script>
+</body>
+</html>
