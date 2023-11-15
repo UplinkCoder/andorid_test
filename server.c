@@ -16,14 +16,14 @@ typedef struct location_t {
 
 static struct location_t lastLocation = {0, 0};  // To store the last location
 
-const char* create_maps_html(double latitude, double longitude)
+const char* create_maps_html(double latitude, double longitude, const char* name)
 {
     static char buffer[1024];
 
     int sz = (int) snprintf(buffer, sizeof(buffer),
         "<html>"
         "<head>"
-        "<title>Wo ist mein Sklave</title>"
+        "<title>Wo ist mein %s</title>"
         "</head>"
         "<body>"
         "<script>"
@@ -39,7 +39,7 @@ const char* create_maps_html(double latitude, double longitude)
         "addMapIframe(%f, %f);"
         "</script>"
         "</body>"
-        "</html>", latitude, longitude);
+        "</html>", name, latitude, longitude);
 
         return buffer;
 }
@@ -63,9 +63,9 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
 
         // Parse latitude and longitude from query parameters
         double latitude = 0.0, longitude = 0.0;
-        const char* ts = ctime(NULL);
         const char *lat_str = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, "lat");
         const char *lon_str = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, "lon");
+        const char *name_str = MHD_lookup_connection_value(connection, MHD_GET_ARGUMENT_KIND, "name");
 
         if (lat_str && lon_str) {
             latitude = atof(lat_str);
@@ -80,8 +80,8 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
                 fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
             } else {
                 snprintf(sql, sizeof(sql),
-                               "INSERT INTO locations (latitude, longitude, time) VALUES (%g, %g, %s)",
-                                latitude, longitude, ts);
+                               "INSERT INTO locations (latitude, longitude, time, name) VALUES (%g, %g, strftime('%%s', 'now'), '%s')",
+                                latitude, longitude, name_str);
                 rc = sqlite3_exec(db, sql, 0, 0, &error_message);
                 if (rc != SQLITE_OK) {
                     fprintf(stderr, "SQL error: %s\n", error_message);
@@ -106,6 +106,7 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
 
         // Retrieve the last stored location from the SQLite database
         double latitude = 0.0, longitude = 0.0;
+        const char* name;
         sqlite3 *db;
         sqlite3_stmt *stmt;
 
@@ -113,15 +114,16 @@ int answer_to_connection(void *cls, struct MHD_Connection *connection,
         if (rc) {
             fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
         } else {
-            const char *sql = "SELECT latitude, longitude FROM locations ORDER BY ROWID DESC LIMIT 1";
+            const char *sql = "SELECT latitude, longitude, time, name FROM locations ORDER BY ROWID DESC LIMIT 1";
             rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
             if (rc == SQLITE_OK) {
                 rc = sqlite3_step(stmt);
                 if (rc == SQLITE_ROW) {
                     latitude = sqlite3_column_double(stmt, 0);
                     longitude = sqlite3_column_double(stmt, 1);
+                    name = sqlite3_column_text(stmt, 3);
                     // response = create_location_json(latitude, longitude);
-                    response = create_maps_html(latitude, longitude);
+                    response = create_maps_html(latitude, longitude, name);
                 }
                 sqlite3_finalize(stmt);
             }
@@ -159,7 +161,7 @@ int main() {
         return (1);
     }
 
-    const char *sql = "CREATE TABLE IF NOT EXISTS locations (latitude REAL, longitude REAL, time TIME)";
+    const char *sql = "CREATE TABLE IF NOT EXISTS locations (latitude REAL, longitude REAL, time INTEGER, name TEXT)";
     rc = sqlite3_exec(db, sql, 0, 0, &error_message);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error: %s\n", error_message);
