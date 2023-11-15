@@ -28,6 +28,7 @@ public class MainActivity extends Activity {
     private LocationManager locationManager;
     private LocationListener locationListener;
     private TextView locationTextView;
+    private  LocationUpdateTask httpUpdater;
 
 
     @Override
@@ -38,6 +39,7 @@ public class MainActivity extends Activity {
         // Initialize location manager and listener
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationListener = new MyLocationListener();
+        httpUpdater = new LocationUpdateTask(this);
 
         // Check for location permission
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -123,42 +125,7 @@ public class MainActivity extends Activity {
         }
 
         private void updateLocation(double latitude, double longitude) {
-            HttpURLConnection urlConnection = null;
-            InputStream inputStream = null;
-
-            // Retrieve the URL from shared preferences
-            SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-            String url = sharedPreferences.getString("url", "");
-
-            try {
-                // Construct the URL with latitude and longitude as query parameters
-                URL updateUrl = new URL(url + "?lat=" + latitude + "&lon=" + longitude);
-                urlConnection = (HttpURLConnection) updateUrl.openConnection();
-
-                urlConnection.setRequestMethod("GET");
-
-                // Read the response, if needed
-                inputStream = urlConnection.getInputStream();
-                Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
-                String response = scanner.hasNext() ? scanner.next() : "";
-
-                // Handle the response as needed
-
-            } catch (IOException e) {
-                // Handle exceptions
-                e.printStackTrace();
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+           httpUpdater.executeLocationUpdate(latitude, longitude);
         }
 
         @Override
